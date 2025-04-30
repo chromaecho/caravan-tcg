@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Caravan Booster Pack</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: radial-gradient(#1e1e2f, #0d0d17);
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
+    .pack {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .card {
+      width: 100px;
+      height: 140px;
+      perspective: 1000px;
+      position: relative;
+      transform: translateY(-200px);
+      opacity: 0;
+      transition: transform 0.5s ease, opacity 0.5s ease;
+    }
+    .card.reveal {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    .card-inner {
+      width: 100%;
+      height: 100%;
+      transition: transform 0.6s;
+      transform-style: preserve-3d;
+      position: relative;
+    }
+    .card.flipped .card-inner {
+      transform: rotateY(180deg);
+    }
+    .card-front, .card-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    }
+    .card-front {
+      background: #ccc;
+      color: #333;
+      transform: rotateY(180deg);
+    }
+    .card-back {
+      background: linear-gradient(to bottom right, #333, #555);
+    }
+    .rarity-SSR {
+      border: 3px solid gold;
+      background: url('https://via.placeholder.com/100x140/FFD700/000000?text=SSR') center/cover;
+      position: relative;
+    }
+    .rarity-SSR::after {
+      content: "";
+      position: absolute;
+      top: -10px;
+      left: -10px;
+      right: -10px;
+      bottom: -10px;
+      background: radial-gradient(circle, rgba(255,255,0,0.4) 0%, transparent 60%);
+      animation: glow 1.5s infinite alternate;
+      border-radius: 12px;
+      z-index: -1;
+    }
+    @keyframes glow {
+      0% { box-shadow: 0 0 10px 4px gold; }
+      100% { box-shadow: 0 0 20px 8px gold; }
+    }
+    .rarity-Rare { border: 3px solid deepskyblue; background: url('/mnt/data/card-rare-1.png') center/cover;}
+    .rarity-Uncommon { border: 3px solid limegreen; background: url('/mnt/data/card-common-1.png') center/cover; }
+    .rarity-Common { border: 3px solid gray; background: url('https://via.placeholder.com/100x140/808080/000000?text=Common') center/cover; }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 10px;
+      border-radius: 8px;
+    }
+    .menu {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+    .pack-image {
+      width: 200px;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>Caravan Booster Pack</h1>
+  <div class="menu">
+    <img class="pack-image" src="https://via.placeholder.com/200x280/800000/ffffff?text=Caravan+Pack" alt="Pack Image" />
+    <button onclick="openPack()">Open Pack</button>
+  </div>
+  <div class="pack" id="pack"></div>
+
+  <!-- Sound Effects -->
+  <audio id="sound-SSR" src="https://assets.mixkit.co/sfx/preview/mixkit-magical-glitter-swoosh-939.mp3"></audio>
+  <audio id="sound-Rare" src="https://assets.mixkit.co/sfx/preview/mixkit-sci-fi-reveal-906.mp3"></audio>
+  <audio id="sound-Uncommon" src="https://assets.mixkit.co/sfx/preview/mixkit-video-game-win-2016.mp3"></audio>
+  <audio id="sound-Common" src="https://assets.mixkit.co/sfx/preview/mixkit-game-click-1114.mp3"></audio>
+
+  <script>
+    const rarities = [
+      { type: 'Common', count: 6 },
+      { type: 'Uncommon', count: 1 },
+      { type: 'Rare', count: 2 },
+      { type: 'SSR', count: 1 },
+    ];
+
+    function playSound(rarity) {
+      const sound = document.getElementById(`sound-${rarity}`);
+      if (sound) sound.play();
+    }
+
+    function createCard(rarity, index) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.style.transitionDelay = `${index * 0.2}s`;
+
+      const inner = document.createElement('div');
+      inner.className = 'card-inner';
+
+      const back = document.createElement('div');
+      back.className = 'card-back';
+
+      const front = document.createElement('div');
+      front.className = `card-front rarity-${rarity}`;
+
+      inner.appendChild(back);
+      inner.appendChild(front);
+      card.appendChild(inner);
+
+      card.addEventListener('click', () => {
+        if (!card.classList.contains('flipped')) {
+          card.classList.add('flipped');
+          playSound(rarity);
+        }
+      });
+
+      return card;
+    }
+
+    function openPack() {
+      const pack = document.getElementById('pack');
+      pack.innerHTML = '';
+
+      const cards = [];
+      rarities.forEach(({ type, count }) => {
+        for (let i = 0; i < count; i++) {
+          cards.push(type);
+        }
+      });
+
+      // Shuffle logic
+      for (let i = cards.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [cards[i], cards[j]] = [cards[j], cards[i]];
+      }
+
+      // Simulate rearranging pack like Pokémon
+      const movedToFront = cards.splice(cards.length - 3, 3);
+      cards.unshift(...movedToFront);
+
+      cards.forEach((rarity, i) => {
+        const card = createCard(rarity, i);
+        pack.appendChild(card);
+        setTimeout(() => {
+          card.classList.add('reveal');
+        }, 100);
+      });
+    }
+  </script>
+</body>
+</html>
